@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>News Classification Tool</title>
+    <style>
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: #f3f6fb;
+            font-family: Arial, sans-serif;
+            color: #1f2937;
+        }
+
+        .card {
+            width: 100%;
+            max-width: 600px;
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.1);
+        }
+
+        .title {
+            margin: 0 0 6px;
+            font-size: 1.7rem;
+        }
+
+        .subtitle {
+            margin: 0 0 18px;
+            color: #64748b;
+            font-size: 0.97rem;
+            line-height: 1.5;
+        }
+
+        textarea {
+            width: 100%;
+            box-sizing: border-box;
+            min-height: 180px;
+            border-radius: 12px;
+            border: 1px solid #cbd5e1;
+            padding: 14px;
+            font-size: 0.98rem;
+            line-height: 1.45;
+            resize: vertical;
+            font-family: inherit;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+        }
+
+        .actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 14px;
+        }
+
+        .actions button {
+            flex: 1;
+            padding: 11px 14px;
+            border: none;
+            border-radius: 10px;
+            color: #ffffff;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.15s ease, opacity 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .actions button:hover {
+            transform: translateY(-1px);
+        }
+
+        .btn-zero {
+            background: #2563eb;
+            box-shadow: 0 6px 14px rgba(37, 99, 235, 0.25);
+        }
+
+        .btn-few {
+            background: #7c3aed;
+            box-shadow: 0 6px 14px rgba(124, 58, 237, 0.25);
+        }
+
+        .actions button:disabled {
+            opacity: 0.65;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .result {
+            margin-top: 18px;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            padding: 14px;
+            background: #f8fafc;
+            transition: background-color 0.2s ease, border-color 0.2s ease;
+        }
+
+        .result-title {
+            margin: 0 0 8px;
+            font-size: 0.95rem;
+            color: #475569;
+        }
+
+        .result-text {
+            margin: 0;
+            font-size: 1.05rem;
+            font-weight: 700;
+        }
+
+        .result-meta {
+            margin: 6px 0 0;
+            font-size: 0.9rem;
+            color: #64748b;
+        }
+
+        .sport {
+            background: #e8f1ff;
+            border-color: #bfdbfe;
+        }
+
+        .tech {
+            background: #ebfbe8;
+            border-color: #bbf7d0;
+        }
+
+        .politique {
+            background: #ffecec;
+            border-color: #fecaca;
+        }
+
+        .sante {
+            background: #fff8db;
+            border-color: #fde68a;
+        }
+    </style>
+</head>
+<body>
+    <main class="card">
+        <h1 class="title">News Classification Tool</h1>
+        <p class="subtitle">
+            Zero-shot classifies with only an instruction. Few-shot uses examples, then predicts: Sport, Tech, Politique, or Sante.
+        </p>
+
+        <textarea id="emailInput" placeholder="Paste your news text here..."></textarea>
+
+        <div class="actions">
+            <button id="zeroShotBtn" class="btn-zero">Zero-shot</button>
+            <button id="fewShotBtn" class="btn-few">Few-shot</button>
+        </div>
+
+        <section id="resultBox" class="result">
+            <p class="result-title">Result</p>
+            <p id="resultText" class="result-text">Category: -</p>
+            <p id="resultMeta" class="result-meta">Method: -</p>
+        </section>
+    </main>
+
+    <script>
+        const emailInput = document.getElementById("emailInput");
+        const resultBox = document.getElementById("resultBox");
+        const resultText = document.getElementById("resultText");
+        const resultMeta = document.getElementById("resultMeta");
+        const zeroShotBtn = document.getElementById("zeroShotBtn");
+        const fewShotBtn = document.getElementById("fewShotBtn");
+
+        function setLoadingState(isLoading) {
+            zeroShotBtn.disabled = isLoading;
+            fewShotBtn.disabled = isLoading;
+            if (isLoading) {
+                resultBox.classList.remove("sport", "tech", "politique", "sante");
+                resultText.textContent = "Classifying...";
+                resultMeta.textContent = "Method: -";
+            }
+        }
+
+        function applyResultStyle(label) {
+            resultBox.classList.remove("sport", "tech", "politique", "sante");
+            const normalized = (label || "").toLowerCase();
+
+            if (normalized.includes("sport")) {
+                resultBox.classList.add("sport");
+            } else if (normalized.includes("tech")) {
+                resultBox.classList.add("tech");
+            } else if (normalized.includes("politique")) {
+                resultBox.classList.add("politique");
+            } else if (normalized.includes("sante") || normalized.includes("santé")) {
+                resultBox.classList.add("sante");
+            }
+        }
+
+        async function classify(endpoint) {
+            const email = emailInput.value.trim();
+            if (!email) {
+                resultBox.classList.remove("sport", "tech", "politique", "sante");
+                resultText.textContent = "Category: -";
+                resultMeta.textContent = "Please enter a news text first.";
+                return;
+            }
+
+            setLoadingState(true);
+
+            try {
+                const response = await fetch(endpoint, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email: email })
+                });
+
+                const data = await response.json();
+                if (!response.ok) {
+                    resultBox.classList.remove("sport", "tech", "politique", "sante");
+                    resultText.textContent = "Category: Error";
+                    resultMeta.textContent = data.error || "Unknown error";
+                    return;
+                }
+
+                const label = (data.label || "").trim();
+                applyResultStyle(label);
+                resultText.textContent = `Category: ${label || "-"}`;
+                resultMeta.textContent = `Method: ${data.method || "-"}`;
+            } catch (error) {
+                resultBox.classList.remove("sport", "tech", "politique", "sante");
+                resultText.textContent = "Category: Request failed";
+                resultMeta.textContent = error.message;
+            } finally {
+                setLoadingState(false);
+            }
+        }
+
+        zeroShotBtn.addEventListener("click", () => classify("/zero-shot"));
+        fewShotBtn.addEventListener("click", () => classify("/few-shot"));
+    </script>
+</body>
+</html>
