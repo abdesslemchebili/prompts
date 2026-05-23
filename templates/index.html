@@ -1,245 +1,359 @@
+Replace your entire HTML file with this updated version.
+It now works with your new `/compare` endpoint and shows:
+
+* Prompt textarea
+* Category selector
+* One compare button
+* Zero-shot response
+* Few-shot response
+* Better modern UI
+* Side-by-side comparison cards
+
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>News Classification Tool</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Few-Shot vs Zero-Shot Demo</title>
+
     <style>
+        * {
+            box-sizing: border-box;
+        }
+
         body {
             margin: 0;
             min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            background: #f3f6fb;
+            padding: 30px;
+            background: #f1f5f9;
             font-family: Arial, sans-serif;
-            color: #1f2937;
+            color: #1e293b;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: auto;
         }
 
         .card {
-            width: 100%;
-            max-width: 600px;
-            background: #ffffff;
-            border-radius: 16px;
-            padding: 24px;
-            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.1);
+            background: white;
+            border-radius: 18px;
+            padding: 28px;
+            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
         }
 
         .title {
-            margin: 0 0 6px;
-            font-size: 1.7rem;
+            margin: 0;
+            font-size: 2rem;
         }
 
         .subtitle {
-            margin: 0 0 18px;
+            margin-top: 10px;
             color: #64748b;
-            font-size: 0.97rem;
-            line-height: 1.5;
+            line-height: 1.6;
+        }
+
+        .form-group {
+            margin-top: 22px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
         }
 
         textarea {
             width: 100%;
-            box-sizing: border-box;
             min-height: 180px;
+            resize: vertical;
             border-radius: 12px;
             border: 1px solid #cbd5e1;
             padding: 14px;
-            font-size: 0.98rem;
-            line-height: 1.45;
-            resize: vertical;
+            font-size: 1rem;
             font-family: inherit;
-            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+            transition: 0.2s;
         }
 
-        textarea:focus {
+        textarea:focus,
+        select:focus {
             outline: none;
             border-color: #2563eb;
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15);
         }
 
-        .actions {
-            display: flex;
-            gap: 12px;
-            margin-top: 14px;
+        select {
+            width: 100%;
+            padding: 12px;
+            border-radius: 12px;
+            border: 1px solid #cbd5e1;
+            font-size: 1rem;
+            background: white;
         }
 
-        .actions button {
-            flex: 1;
-            padding: 11px 14px;
+        .compare-btn {
+            margin-top: 24px;
+            width: 100%;
+            padding: 14px;
             border: none;
-            border-radius: 10px;
-            color: #ffffff;
-            font-size: 0.95rem;
-            font-weight: 600;
+            border-radius: 14px;
+            background: linear-gradient(135deg, #2563eb, #7c3aed);
+            color: white;
+            font-size: 1rem;
+            font-weight: bold;
             cursor: pointer;
-            transition: transform 0.15s ease, opacity 0.2s ease, box-shadow 0.2s ease;
+            transition: 0.2s;
         }
 
-        .actions button:hover {
+        .compare-btn:hover {
             transform: translateY(-1px);
         }
 
-        .btn-zero {
-            background: #2563eb;
-            box-shadow: 0 6px 14px rgba(37, 99, 235, 0.25);
-        }
-
-        .btn-few {
-            background: #7c3aed;
-            box-shadow: 0 6px 14px rgba(124, 58, 237, 0.25);
-        }
-
-        .actions button:disabled {
-            opacity: 0.65;
+        .compare-btn:disabled {
+            opacity: 0.7;
             cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
         }
 
-        .result {
-            margin-top: 18px;
-            border-radius: 12px;
+        .results {
+            margin-top: 28px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 20px;
+        }
+
+        .result-card {
+            border-radius: 16px;
+            padding: 20px;
             border: 1px solid #e2e8f0;
-            padding: 14px;
-            background: #f8fafc;
-            transition: background-color 0.2s ease, border-color 0.2s ease;
+            background: #ffffff;
         }
 
-        .result-title {
-            margin: 0 0 8px;
-            font-size: 0.95rem;
-            color: #475569;
+        .result-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 14px;
         }
 
-        .result-text {
-            margin: 0;
-            font-size: 1.05rem;
-            font-weight: 700;
+        .badge {
+            padding: 6px 12px;
+            border-radius: 999px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            color: white;
         }
 
-        .result-meta {
-            margin: 6px 0 0;
-            font-size: 0.9rem;
+        .zero-badge {
+            background: #2563eb;
+        }
+
+        .few-badge {
+            background: #7c3aed;
+        }
+
+        .response-text {
+            line-height: 1.7;
+            color: #334155;
+            white-space: pre-wrap;
+        }
+
+        .loading {
+            text-align: center;
+            margin-top: 20px;
             color: #64748b;
         }
 
-        .sport {
-            background: #e8f1ff;
-            border-color: #bfdbfe;
+        .error {
+            margin-top: 20px;
+            background: #fee2e2;
+            border: 1px solid #fecaca;
+            color: #991b1b;
+            padding: 14px;
+            border-radius: 12px;
         }
 
-        .tech {
-            background: #ebfbe8;
-            border-color: #bbf7d0;
+        .footer-info {
+            margin-top: 14px;
+            color: #64748b;
+            font-size: 0.92rem;
         }
 
-        .politique {
-            background: #ffecec;
-            border-color: #fecaca;
-        }
-
-        .sante {
-            background: #fff8db;
-            border-color: #fde68a;
-        }
     </style>
 </head>
+
 <body>
-    <main class="card">
-        <h1 class="title">News Classification Tool</h1>
+
+<div class="container">
+
+    <div class="card">
+
+        <h1 class="title">Zero-Shot vs Few-Shot Prompting</h1>
+
         <p class="subtitle">
-            Zero-shot classifies with only an instruction. Few-shot uses examples, then predicts: Sport, Tech, Politique, or Sante.
+            Compare how an AI responds using only instructions (Zero-Shot)
+            versus responses improved with examples (Few-Shot).
         </p>
 
-        <textarea id="emailInput" placeholder="Paste your news text here..."></textarea>
+        <div class="form-group">
+            <label for="promptInput">Your Prompt</label>
 
-        <div class="actions">
-            <button id="zeroShotBtn" class="btn-zero">Zero-shot</button>
-            <button id="fewShotBtn" class="btn-few">Few-shot</button>
+            <textarea
+                id="promptInput"
+                placeholder="Example: Explain how artificial intelligence is transforming healthcare."
+            ></textarea>
         </div>
 
-        <section id="resultBox" class="result">
-            <p class="result-title">Result</p>
-            <p id="resultText" class="result-text">Category: -</p>
-            <p id="resultMeta" class="result-meta">Method: -</p>
-        </section>
-    </main>
+        <div class="form-group">
+            <label for="categorySelect">Category</label>
 
-    <script>
-        const emailInput = document.getElementById("emailInput");
-        const resultBox = document.getElementById("resultBox");
-        const resultText = document.getElementById("resultText");
-        const resultMeta = document.getElementById("resultMeta");
-        const zeroShotBtn = document.getElementById("zeroShotBtn");
-        const fewShotBtn = document.getElementById("fewShotBtn");
+            <select id="categorySelect">
+                <option value="">Select a category</option>
+                <option value="Technology">Technology</option>
+                <option value="Education">Education</option>
+                <option value="Healthcare">Healthcare</option>
+                <option value="Business">Business</option>
+                <option value="Science">Science</option>
+            </select>
+        </div>
 
-        function setLoadingState(isLoading) {
-            zeroShotBtn.disabled = isLoading;
-            fewShotBtn.disabled = isLoading;
-            if (isLoading) {
-                resultBox.classList.remove("sport", "tech", "politique", "sante");
-                resultText.textContent = "Classifying...";
-                resultMeta.textContent = "Method: -";
-            }
+        <button id="compareBtn" class="compare-btn">
+            Compare Zero-Shot & Few-Shot
+        </button>
+
+        <div id="loading" class="loading" style="display: none;">
+            Generating responses...
+        </div>
+
+        <div id="errorBox" class="error" style="display: none;"></div>
+
+        <div class="results">
+
+            <div class="result-card">
+                <div class="result-header">
+                    <h3>Zero-Shot Response</h3>
+                    <span class="badge zero-badge">ZERO</span>
+                </div>
+
+                <div id="zeroResult" class="response-text">
+                    Waiting for response...
+                </div>
+            </div>
+
+            <div class="result-card">
+                <div class="result-header">
+                    <h3>Few-Shot Response</h3>
+                    <span class="badge few-badge">FEW</span>
+                </div>
+
+                <div id="fewResult" class="response-text">
+                    Waiting for response...
+                </div>
+            </div>
+
+        </div>
+
+        <p class="footer-info">
+            Few-shot prompting provides examples before answering,
+            which usually improves structure, accuracy, and consistency.
+        </p>
+
+    </div>
+
+</div>
+
+<script>
+
+    const compareBtn = document.getElementById("compareBtn");
+
+    const promptInput = document.getElementById("promptInput");
+
+    const categorySelect = document.getElementById("categorySelect");
+
+    const zeroResult = document.getElementById("zeroResult");
+
+    const fewResult = document.getElementById("fewResult");
+
+    const loading = document.getElementById("loading");
+
+    const errorBox = document.getElementById("errorBox");
+
+    function setLoading(isLoading) {
+
+        compareBtn.disabled = isLoading;
+
+        loading.style.display = isLoading ? "block" : "none";
+
+        if (isLoading) {
+            zeroResult.textContent = "Generating...";
+            fewResult.textContent = "Generating...";
+            errorBox.style.display = "none";
+        }
+    }
+
+    async function compareResponses() {
+
+        const prompt = promptInput.value.trim();
+
+        const category = categorySelect.value;
+
+        if (!prompt) {
+            errorBox.style.display = "block";
+            errorBox.textContent = "Please enter a prompt.";
+            return;
         }
 
-        function applyResultStyle(label) {
-            resultBox.classList.remove("sport", "tech", "politique", "sante");
-            const normalized = (label || "").toLowerCase();
-
-            if (normalized.includes("sport")) {
-                resultBox.classList.add("sport");
-            } else if (normalized.includes("tech")) {
-                resultBox.classList.add("tech");
-            } else if (normalized.includes("politique")) {
-                resultBox.classList.add("politique");
-            } else if (normalized.includes("sante") || normalized.includes("santé")) {
-                resultBox.classList.add("sante");
-            }
+        if (!category) {
+            errorBox.style.display = "block";
+            errorBox.textContent = "Please select a category.";
+            return;
         }
 
-        async function classify(endpoint) {
-            const email = emailInput.value.trim();
-            if (!email) {
-                resultBox.classList.remove("sport", "tech", "politique", "sante");
-                resultText.textContent = "Category: -";
-                resultMeta.textContent = "Please enter a news text first.";
-                return;
+        setLoading(true);
+
+        try {
+
+            const response = await fetch("/compare", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    prompt,
+                    category
+                })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || "Something went wrong.");
             }
 
-            setLoadingState(true);
+            zeroResult.textContent = data.zero_shot || "No response";
 
-            try {
-                const response = await fetch(endpoint, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ email: email })
-                });
+            fewResult.textContent = data.few_shot || "No response";
 
-                const data = await response.json();
-                if (!response.ok) {
-                    resultBox.classList.remove("sport", "tech", "politique", "sante");
-                    resultText.textContent = "Category: Error";
-                    resultMeta.textContent = data.error || "Unknown error";
-                    return;
-                }
+        } catch (error) {
 
-                const label = (data.label || "").trim();
-                applyResultStyle(label);
-                resultText.textContent = `Category: ${label || "-"}`;
-                resultMeta.textContent = `Method: ${data.method || "-"}`;
-            } catch (error) {
-                resultBox.classList.remove("sport", "tech", "politique", "sante");
-                resultText.textContent = "Category: Request failed";
-                resultMeta.textContent = error.message;
-            } finally {
-                setLoadingState(false);
-            }
+            errorBox.style.display = "block";
+
+            errorBox.textContent = error.message;
+
+            zeroResult.textContent = "Error";
+
+            fewResult.textContent = "Error";
+
+        } finally {
+
+            setLoading(false);
         }
+    }
 
-        zeroShotBtn.addEventListener("click", () => classify("/zero-shot"));
-        fewShotBtn.addEventListener("click", () => classify("/few-shot"));
-    </script>
+    compareBtn.addEventListener("click", compareResponses);
+
+</script>
+
 </body>
 </html>
+```
